@@ -8,11 +8,11 @@
 import SwiftUI
 import AVFoundation
 
-struct QRCodeScannerView: UIViewControllerRepresentable {
+struct QRCodeScanner: UIViewControllerRepresentable {
     class Coordinator: NSObject, AVCaptureMetadataOutputObjectsDelegate {
-        var parent: QRCodeScannerView
+        var parent: QRCodeScanner
 
-        init(parent: QRCodeScannerView) {
+        init(parent: QRCodeScanner) {
             self.parent = parent
         }
 

@@ -45,7 +45,7 @@ struct QRCodeGroupCreationView: View {
             }
         }
         .sheet(isPresented: $viewModel.isScanning) {
-            QRCodeScannerView { scannedValue in
+            QRCodeScanner { scannedValue in
                 viewModel.handleScannedGroupId(scannedValue)
                 if viewModel.successMessage != nil {
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
