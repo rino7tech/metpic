@@ -10,12 +10,12 @@ import FirebaseAuth
 
 struct QRCodeGeneratorView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Binding var navigateToCustomTab: Bool
     @State private var isSaving = false
     @State private var errorMessage: String?
     @State private var successMessage: String?
     @State private var generatedGroupId: String?
     @State private var groupMembers: [String] = []
-    @State private var shouldShowTabBar = false
     let groupName = "My Group"
 
     var body: some View {
@@ -59,7 +59,7 @@ struct QRCodeGeneratorView: View {
 
 
                     Button(action: {
-                        shouldShowTabBar = true
+                        navigateToCustomTab = true
                     }) {
                         HStack {
                             Image(systemName: "checkmark.square.fill")

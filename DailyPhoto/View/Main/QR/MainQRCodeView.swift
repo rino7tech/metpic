@@ -110,7 +110,7 @@ struct MainQRCodeView: View {
                         Spacer()
                     }
                     .sheet(isPresented: $isShowingQRCodeGenerator) {
-                        QRCodeGeneratorView()
+                        QRCodeGeneratorView(navigateToCustomTab: $navigateToCustomTab)
                             .environmentObject(authViewModel)
                             .presentationDetents([
                                 .height(450)
