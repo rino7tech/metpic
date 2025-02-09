@@ -10,13 +10,8 @@ import FirebaseAuth
 
 struct QRCodeGeneratorView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @StateObject private var viewModel = QRCodeGeneratorViewModel()
     @Binding var navigateToCustomTab: Bool
-    @State private var isSaving = false
-    @State private var errorMessage: String?
-    @State private var successMessage: String?
-    @State private var generatedGroupId: String?
-    @State private var groupMembers: [String] = []
-    let groupName = "My Group"
 
     var body: some View {
         ZStack {
@@ -31,32 +26,35 @@ struct QRCodeGeneratorView: View {
                         .fontWeight(.semibold)
                         .foregroundStyle(Color.customWhite)
                         .padding(.top, 50)
+
                     Spacer()
 
-                    if let qrCodeContent = generatedGroupId {
-                        if let qrImage = generateQRCode(from: qrCodeContent) {
-                            ZStack {
-                                Image(uiImage: qrImage)
-                                    .interpolation(.none)
-                                    .resizable()
-                                    .scaledToFit()
-                                    .frame(width: 230, height: 230)
-                                    .padding(20)
-                                    .background(Color.customWhite.opacity(0.7).blur(radius: 0.3))
-                                    .cornerRadius(20)
-                                    .overlay(
-                                        RoundedRectangle(cornerRadius: 20)
-                                            .stroke(Color.customPink, lineWidth: 5)
-                                    )
-                            }
-                            .padding()
-                        } else {
-                            Text("QRコードの生成に失敗しました")
-                                .foregroundColor(.red)
+                    if let qrCodeContent = viewModel.generatedGroupId,
+                       let qrImage = viewModel.generateQRCode(from: qrCodeContent) {
+                        ZStack {
+                            Image(uiImage: qrImage)
+                                .interpolation(.none)
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 230, height: 230)
+                                .padding(20)
+                                .background(Color.customWhite.opacity(0.7).blur(radius: 0.3))
+                                .cornerRadius(20)
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 20)
+                                        .stroke(Color.customPink, lineWidth: 5)
+                                )
                         }
+                        .padding()
+                    } else if viewModel.isSaving {
+                        ProgressView("QRコードを生成中...")
+                            .padding()
+                    } else {
+                        Text("QRコードの生成に失敗しました")
+                            .foregroundColor(.red)
                     }
-                    Spacer()
 
+                    Spacer()
 
                     Button(action: {
                         navigateToCustomTab = true
@@ -92,75 +90,11 @@ struct QRCodeGeneratorView: View {
                 }
             }
             .onAppear {
-                generateGroupAndQRCode()
+                viewModel.generateGroupAndQRCode(currentUID: authViewModel.currentUID)
             }
             .padding()
             .edgesIgnoringSafeArea(.bottom)
         }
         .ignoresSafeArea()
-    }
-
-    private func generateQRCode(from string: String) -> UIImage? {
-        let data = string.data(using: .utf8)
-        guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
-        filter.setValue(data, forKey: "inputMessage")
-        filter.setValue("M", forKey: "inputCorrectionLevel")
-
-        guard let outputImage = filter.outputImage else { return nil }
-
-        let colorFilter = CIFilter(name: "CIFalseColor")!
-        colorFilter.setValue(outputImage, forKey: "inputImage")
-        colorFilter.setValue(CIColor(color: .customPink), forKey: "inputColor0")
-        colorFilter.setValue(CIColor(color: .clear), forKey: "inputColor1")
-
-        guard let coloredImage = colorFilter.outputImage else { return nil }
-
-        let transform = CGAffineTransform(scaleX: 10, y: 10)
-        let scaledImage = coloredImage.transformed(by: transform)
-
-        let context = CIContext()
-        if let cgImage = context.createCGImage(scaledImage, from: scaledImage.extent) {
-            return UIImage(cgImage: cgImage)
-        }
-        return nil
-    }
-
-    private func generateGroupAndQRCode() {
-        guard let currentUID = authViewModel.currentUID else {
-            errorMessage = "ユーザーIDが取得できませんでした"
-            return
-        }
-
-        Task {
-            do {
-                isSaving = true
-                errorMessage = nil
-                successMessage = nil
-
-                let groupId = UUID().uuidString
-                generatedGroupId = groupId
-
-                let group = GroupModel(id: groupId, name: groupName, createdAt: Date(), members: [currentUID])
-                try await FirebaseClient.createGroup(group: group)
-
-                successMessage = "グループが作成され、QRコードが生成されました: \(groupId)"
-                fetchGroupMembers(groupId: groupId)
-                isSaving = false
-            } catch {
-                errorMessage = "グループの作成に失敗しました: \(error.localizedDescription)"
-                isSaving = false
-            }
-        }
-    }
-
-    private func fetchGroupMembers(groupId: String) {
-        Task {
-            do {
-                let group = try await FirebaseClient.fetchGroup(groupId: groupId)
-                groupMembers = group.members
-            } catch {
-                errorMessage = "参加者の取得に失敗しました: \(error.localizedDescription)"
-            }
-        }
     }
 }
