@@ -9,9 +9,9 @@ import Foundation
 import FirebaseFirestore
 
 struct ImageModel: Codable, Hashable {
-    @DocumentID var id: String?  // FirestoreのドキュメントIDを取得
+    @DocumentID var id: String?
     let url: String
-    let uploadedAt: Date  // Firestoreは `Date` ではなく `Timestamp`
+    let uploadedAt: Date
     let capturedBy: String
 
     var encoded: [String: Any] {
