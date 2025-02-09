@@ -9,23 +9,22 @@ import SwiftUI
 
 struct QRCodeGroupCreationView: View {
     @Binding var navigateToTabBar: Bool
-    @State private var scannedGroupId: String?
-    @State private var isScanning = false
-    @State private var isLoading = false
-    @State private var successMessage: String?
-    @State private var errorMessage: String?
+    @StateObject private var viewModel: QRCodeGroupCreationViewModel
 
-    @EnvironmentObject var authViewModel: AuthViewModel
+    init(navigateToTabBar: Binding<Bool>, authViewModel: AuthViewModel) {
+        self._navigateToTabBar = navigateToTabBar
+        self._viewModel = StateObject(wrappedValue: QRCodeGroupCreationViewModel(authViewModel: authViewModel))
+    }
 
     var body: some View {
         VStack {
-            if let successMessage {
+            if let successMessage = viewModel.successMessage {
                 Text(successMessage)
                     .foregroundColor(.green)
                     .padding()
             } else {
                 Button(action: {
-                    isScanning = true
+                    viewModel.startScanning()
                 }) {
                     Text("QRコードをスキャン")
                         .foregroundColor(.customWhite)
@@ -35,45 +34,24 @@ struct QRCodeGroupCreationView: View {
                 }
             }
 
-            if isLoading {
+            if viewModel.isLoading {
                 ProgressView()
             }
 
-            if let errorMessage {
+            if let errorMessage = viewModel.errorMessage {
                 Text(errorMessage)
                     .foregroundColor(.red)
                     .padding()
             }
         }
-        .sheet(isPresented: $isScanning) {
-            QRCodeScannerView { scannedValue in
-                scannedGroupId = scannedValue
-                isScanning = false
-                handleScannedGroupId()
-            }
-        }
-    }
-
-    private func handleScannedGroupId() {
-        guard let scannedGroupId, let currentUserId = authViewModel.currentUID else {
-            errorMessage = "QRコードまたはログイン情報が不正です。"
-            return
-        }
-
-        Task {
-            do {
-                isLoading = true
-                errorMessage = nil
-                try await FirebaseClient.addMemberToGroup(groupId: scannedGroupId, memberId: currentUserId)
-                isLoading = false
-                successMessage = "グループに参加しました！"
-
-                DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
-                    navigateToTabBar = true
+        .sheet(isPresented: $viewModel.isScanning) {
+            QRCodeScanner { scannedValue in
+                viewModel.handleScannedGroupId(scannedValue)
+                if viewModel.successMessage != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1) {
+                        navigateToTabBar = true
+                    }
                 }
-            } catch {
-                isLoading = false
-                errorMessage = "グループ参加に失敗しました: \(error.localizedDescription)"
             }
         }
     }

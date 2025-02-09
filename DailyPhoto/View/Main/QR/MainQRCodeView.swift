@@ -9,24 +9,24 @@ import SwiftUI
 import Colorful
 
 struct MainQRCodeView: View {
-    @State private var isShowingQRCodeGenerator = false
-    @State private var isShowingQRCodeScanner = false
-    @State private var isLoading = false
-    @State private var errorMessage: String?
-    @State private var successMessage: String?
-    @State private var showResultModal = false
-    @State private var navigateToCustomTab = false
     @StateObject private var authViewModel = AuthViewModel()
-    
+    @StateObject private var viewModel: MainQRCodeViewModel
+
+    init() {
+        let authVM = AuthViewModel()
+        _authViewModel = StateObject(wrappedValue: authVM)
+        _viewModel = StateObject(wrappedValue: MainQRCodeViewModel(authViewModel: authVM))
+    }
+
     var body: some View {
         ZStack {
-            if navigateToCustomTab {
+            if viewModel.navigateToCustomTab {
                 MainView()
             } else {
                 ZStack {
                     ColorfulView(animation: .easeInOut(duration: 0.5), colors: [.customPink, .customLightPink.opacity(0.5)])
                         .ignoresSafeArea()
-                    
+
                     VStack {
                         Spacer()
                         RoundedRectangle(cornerRadius: 25)
@@ -35,7 +35,7 @@ struct MainQRCodeView: View {
                             .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 5)
                         Spacer()
                     }
-                    
+
                     VStack(spacing: 20) {
                         Spacer()
                         Text("グループを作成しよう")
@@ -44,16 +44,16 @@ struct MainQRCodeView: View {
                             .foregroundColor(.customPink)
                             .shadow(color: .gray.opacity(0.5), radius: 5, x: 0, y: 3)
                             .padding(.bottom, 10)
-                        
+
                         Text("グループを作成するか、\n グループに参加してください。")
                             .font(.body)
                             .foregroundColor(.customPink)
                             .multilineTextAlignment(.center)
                             .padding(.horizontal, 40)
                             .padding(.bottom, 20)
-                        
+
                         Button(action: {
-                            isShowingQRCodeGenerator = true
+                            viewModel.isShowingQRCodeGenerator = true
                         }) {
                             HStack {
                                 Image(systemName: "plus.circle.fill")
@@ -70,9 +70,9 @@ struct MainQRCodeView: View {
                             .shadow(color: Color.customPink.opacity(0.5), radius: 10, x: 0, y: 5)
                         }
                         .padding(.horizontal, 32)
-                        
+
                         Button(action: {
-                            isShowingQRCodeScanner = true
+                            viewModel.isShowingQRCodeScanner = true
                         }) {
                             HStack {
                                 Image(systemName: "person.3.fill")
@@ -90,18 +90,18 @@ struct MainQRCodeView: View {
                             .shadow(color: Color.customPink.opacity(0.5), radius: 10, x: 0, y: 5)
                         }
                         .padding(.horizontal, 32)
-                        .sheet(isPresented: $isShowingQRCodeScanner) {
+                        .sheet(isPresented: $viewModel.isShowingQRCodeScanner) {
                             QRCodeScannerView { scannedValue in
-                                isShowingQRCodeScanner = false
-                                handleScannedGroupId(scannedGroupId: scannedValue)
+                                viewModel.isShowingQRCodeScanner = false
+                                viewModel.handleScannedGroupId(scannedGroupId: scannedValue)
                             }
                             .presentationDetents([
                                 .height(450)
                             ])
                             .presentationDragIndicator(.visible)
                         }
-                        
-                        if isLoading {
+
+                        if viewModel.isLoading {
                             ProgressView()
                                 .progressViewStyle(CircularProgressViewStyle(tint: .customWhite))
                                 .scaleEffect(1.5)
@@ -109,86 +109,35 @@ struct MainQRCodeView: View {
                         }
                         Spacer()
                     }
-                    .sheet(isPresented: $isShowingQRCodeGenerator) {
-                        QRCodeGeneratorView(navigateToCustomTab: $navigateToCustomTab)
+                    .sheet(isPresented: $viewModel.isShowingQRCodeGenerator) {
+                        QRCodeGeneratorView(navigateToCustomTab: $viewModel.navigateToCustomTab)
                             .environmentObject(authViewModel)
                             .presentationDetents([
                                 .height(450)
                             ])
                             .presentationDragIndicator(.visible)
                     }
-                    .alert(isPresented: $showResultModal) {
-                        if let successMessage {
+                    .alert(isPresented: $viewModel.showResultModal) {
+                        if let successMessage = viewModel.successMessage {
                             return Alert(
                                 title: Text("成功"),
                                 message: Text(successMessage),
                                 dismissButton: .default(Text("OK"), action: {
-                                    navigateToCustomTab = true
+                                    viewModel.navigateToCustomTab = true
                                 })
                             )
                         } else {
                             return Alert(
                                 title: Text("エラー"),
-                                message: Text(errorMessage ?? "不明なエラーが発生しました。"),
+                                message: Text(viewModel.errorMessage ?? "不明なエラーが発生しました。"),
                                 dismissButton: .default(Text("OK"))
                             )
                         }
                     }
                     .onAppear {
-                        checkUserMembership()
+                        viewModel.checkUserMembership()
                     }
                 }
-            }
-        }
-    }
-    
-    private func checkUserMembership() {
-        guard let currentUserId = authViewModel.currentUID else {
-            errorMessage = "ログインが必要です。"
-            showResultModal = true
-            return
-        }
-        
-        Task {
-            do {
-                isLoading = true
-                errorMessage = nil
-                let isMember = try await FirebaseClient.isUserInAnyGroup(userId: currentUserId)
-                isLoading = false
-                
-                if isMember {
-                    successMessage = "グループに所属しています！"
-                } else {
-                    errorMessage = "どのグループにも所属していません。"
-                }
-                showResultModal = true
-            } catch {
-                isLoading = false
-                errorMessage = "エラーが発生しました: \(error.localizedDescription)"
-                showResultModal = true
-            }
-        }
-    }
-    
-    private func handleScannedGroupId(scannedGroupId: String) {
-        guard let currentUserId = authViewModel.currentUID else {
-            errorMessage = "ログインが必要です。"
-            showResultModal = true
-            return
-        }
-        
-        Task {
-            do {
-                isLoading = true
-                errorMessage = nil
-                try await FirebaseClient.addMemberToGroup(groupId: scannedGroupId, memberId: currentUserId)
-                isLoading = false
-                successMessage = "グループに参加しました！"
-                showResultModal = true
-            } catch {
-                isLoading = false
-                errorMessage = "グループ参加に失敗しました: \(error.localizedDescription)"
-                showResultModal = true
             }
         }
     }
