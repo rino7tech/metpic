@@ -91,7 +91,7 @@ struct MainQRCodeView: View {
                         }
                         .padding(.horizontal, 32)
                         .sheet(isPresented: $viewModel.isShowingQRCodeScanner) {
-                            QRCodeScannerView { scannedValue in
+                            QRCodeScanner { scannedValue in
                                 viewModel.isShowingQRCodeScanner = false
                                 viewModel.handleScannedGroupId(scannedGroupId: scannedValue)
                             }

@@ -389,4 +389,33 @@ enum FirebaseClient {
 
         print("✅ ユーザー \(blockedUserId) をブロックし、参加しているグループから削除しました。")
     }
+    static func updateOutdatedSections() async throws {
+        let db = Firestore.firestore()
+        let today = Calendar.current.startOfDay(for: Date())
+
+        let groupsSnapshot = try await db.collection("groups").getDocuments()
+
+        for groupDoc in groupsSnapshot.documents {
+            let groupId = groupDoc.documentID
+            let sectionsRef = db.collection("groups").document(groupId).collection("sections")
+
+            let outdatedSectionsSnapshot = try await sectionsRef
+                .whereField("done", isEqualTo: false)
+                .getDocuments()
+
+            for sectionDoc in outdatedSectionsSnapshot.documents {
+                let sectionId = sectionDoc.documentID
+                let data = sectionDoc.data()
+
+                if let dateTimestamp = data["date"] as? Timestamp {
+                    let sectionDate = Calendar.current.startOfDay(for: dateTimestamp.dateValue())
+
+                    if sectionDate < today {
+                        try await sectionsRef.document(sectionId).updateData(["done": true])
+                        print("✅ セクション \(sectionId) の `done` を true に更新しました")
+                    }
+                }
+            }
+        }
+    }
 }

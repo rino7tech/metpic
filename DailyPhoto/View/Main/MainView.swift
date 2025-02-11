@@ -85,6 +85,7 @@ struct MainView: View {
                     if let uid = authViewModel.currentUID {
                         Task {
                             await viewModel.checkIfPhotoTakenToday(userId: uid)
+                            await viewModel.checkAndUpdateOutdatedSections() 
                         }
                     }
                 }
