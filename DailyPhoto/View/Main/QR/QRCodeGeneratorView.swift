@@ -10,8 +10,10 @@ import FirebaseAuth
 
 struct QRCodeGeneratorView: View {
     @EnvironmentObject var authViewModel: AuthViewModel
+    @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = QRCodeGeneratorViewModel()
     @Binding var navigateToCustomTab: Bool
+    var isPresentedFromGroupMembers: Bool  // 追加
 
     var body: some View {
         ZStack {
@@ -57,12 +59,16 @@ struct QRCodeGeneratorView: View {
                     Spacer()
 
                     Button(action: {
-                        navigateToCustomTab = true
+                        if isPresentedFromGroupMembers {
+                            dismiss() // GroupMembersView から開いた場合は閉じる
+                        } else {
+                            navigateToCustomTab = true // MainQRCodeView から開いた場合は次の処理
+                        }
                     }) {
                         HStack {
-                            Image(systemName: "checkmark.square.fill")
+                            Image(systemName: isPresentedFromGroupMembers ? "xmark.circle.fill" : "checkmark.square.fill")
                                 .foregroundStyle(Color.customPink)
-                            Text("次へ")
+                            Text(isPresentedFromGroupMembers ? "閉じる" : "次へ")
                                 .font(.headline)
                                 .foregroundColor(.customPink)
                                 .fontWeight(.bold)

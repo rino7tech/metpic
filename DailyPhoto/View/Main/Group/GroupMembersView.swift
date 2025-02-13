@@ -13,6 +13,7 @@ struct GroupMembersView: View {
     @StateObject private var viewModel = GroupViewModel()
     @State private var showActionSheet = false
     @State private var selectedMember: MemberModel?
+    @State private var showQRGenerator = false  // QRコード生成画面を表示するためのフラグ
     private let currentUserId = Auth.auth().currentUser?.uid
 
     var body: some View {
@@ -33,6 +34,7 @@ struct GroupMembersView: View {
                 ZStack {
                     ScrollView {
                         VStack(spacing: 15) {
+                            // メンバーのリスト
                             ForEach(viewModel.members) { member in
                                 memberCard(member: member)
                                     .onLongPressGesture {
@@ -40,6 +42,14 @@ struct GroupMembersView: View {
                                             selectedMember = member
                                             showActionSheet = true
                                         }
+                                    }
+                            }
+
+                            // メンバーが1人のときに「メンバーを追加」カードを表示
+                            if viewModel.members.count == 1 {
+                                addMemberCard()
+                                    .onTapGesture {
+                                        showQRGenerator.toggle()
                                     }
                             }
                         }
@@ -74,6 +84,14 @@ struct GroupMembersView: View {
                     .cancel()
                 ]
             )
+        }
+        .sheet(isPresented: $showQRGenerator) {
+            QRCodeGeneratorView(navigateToCustomTab: $showQRGenerator, isPresentedFromGroupMembers: true)
+                .environmentObject(AuthViewModel())
+                .presentationDetents([
+                    .height(450)
+                ])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -113,6 +131,40 @@ struct GroupMembersView: View {
         .cornerRadius(15)
         .shadow(color: .gray.opacity(0.3), radius: 5, x: 0, y: 5)
         .padding(.horizontal, 15)
+    }
+
+    // 「メンバーを追加」用のカード
+    private func addMemberCard() -> some View {
+        Button(action: {
+            showQRGenerator = true
+        }) {
+            HStack(spacing: 15) {
+                Circle()
+                    .fill(Color.customPink)
+                    .frame(width: 50, height: 50)
+                    .overlay(
+                        Image(systemName: "plus")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 20, height: 20)
+                            .foregroundColor(.white)
+                    )
+                    .shadow(color: .gray.opacity(0.3), radius: 5, x: 0, y: 5)
+
+                Text("メンバーを追加")
+                    .font(.headline)
+                    .foregroundColor(.black)
+                    .padding(.leading, 5)
+
+                Spacer()
+            }
+            .padding()
+            .frame(maxWidth: .infinity)
+            .background(Color.customWhite.opacity(0.7))
+            .cornerRadius(15)
+            .shadow(color: .gray.opacity(0.3), radius: 5, x: 0, y: 5)
+            .padding(.horizontal, 15)
+        }
     }
 
     private func reportUser(member: MemberModel) {
