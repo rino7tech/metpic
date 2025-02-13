@@ -12,7 +12,6 @@ struct SignUpEmailView: View {
     @ObservedObject var viewModel: AuthViewModel
     @State private var isEmailFocused: Bool = false
     @State private var isPasswordFocused: Bool = false
-    @State private var isNextScreenActive: Bool = false
 
     var body: some View {
         NavigationStack {
@@ -62,13 +61,8 @@ struct SignUpEmailView: View {
                     .padding(.horizontal, 32)
                     .padding(.bottom, 20)
 
-                    NavigationLink(destination: SignUpProfileView(viewModel: viewModel), isActive: $isNextScreenActive) {
-                        EmptyView()
-                    }
-                    .hidden()
-
                     Button(action: {
-                        isNextScreenActive = true
+                        viewModel.shouldNavigateToProfile = true
                     }) {
                         Text("次へ")
                             .font(.headline)
@@ -110,6 +104,9 @@ struct SignUpEmailView: View {
             }
             .onTapGesture {
                 hideKeyboard()
+            }
+            .navigationDestination(isPresented: $viewModel.shouldNavigateToProfile) {
+                SignUpProfileView(viewModel: viewModel)
             }
         }
     }

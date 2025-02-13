@@ -24,6 +24,7 @@ class AuthViewModel: ObservableObject {
             if isLoggedIn { shouldNavigate = true }
         }
     }
+    @Published var shouldNavigateToProfile: Bool = false
     @Published var shouldNavigate: Bool = false
     @Published var currentUID: String? = nil
     @Published var isLoading: Bool = true
@@ -39,10 +40,15 @@ class AuthViewModel: ObservableObject {
 
     func signUp() {
         Task {
+            DispatchQueue.main.async {
+                self.isLoading = true
+            }
+
             do {
                 let authResult = try await Auth.auth().createUser(withEmail: email, password: password)
                 let uid = authResult.user.uid
                 var uploadedIconURL: String? = nil
+
                 if let iconData = iconData {
                     uploadedIconURL = try await FirebaseClient.uploadUserIcon(data: iconData, uid: uid)
                 }
@@ -50,7 +56,7 @@ class AuthViewModel: ObservableObject {
                 let profileData = ProfileModel(id: uid, name: name, iconURL: uploadedIconURL, createdAt: Date())
                 try await FirebaseClient.settingProfile(data: profileData, uid: uid)
 
-                DispatchQueue.main.async {
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
                     self.isSignedUp = true
                     self.isLoggedIn = true
                     self.currentUID = uid
@@ -59,13 +65,16 @@ class AuthViewModel: ObservableObject {
 
                 await login()
                 await fetchUserProfile()
-
             } catch {
                 DispatchQueue.main.async {
                     self.isSignedUp = false
                     self.isLoggedIn = false
                     self.errorMessage = "アカウント作成エラー: \(error.localizedDescription)"
                 }
+            }
+
+            DispatchQueue.main.async {
+                self.isLoading = false
             }
         }
     }
