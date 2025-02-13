@@ -87,6 +87,13 @@ struct SignUpProfileView: View {
                             .shadow(color: Color.customPink.opacity(0.5), radius: 10, x: 0, y: 5)
                     }
                     .padding(.horizontal, 32)
+                    .disabled(viewModel.isLoading)
+                }
+
+                if viewModel.isLoading {
+                    ProgressView("登録中...")
+                        .padding()
+                        .foregroundColor(.customPink)
                 }
             }
             .navigationBarBackButtonHidden(true)
