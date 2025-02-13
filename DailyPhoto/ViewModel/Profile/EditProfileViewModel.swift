@@ -18,11 +18,17 @@ class EditProfileViewModel: ObservableObject {
     @Published var isLoading: Bool = false
 
     private var authViewModel: AuthViewModel
+    private let originalName: String
 
     init(authViewModel: AuthViewModel) {
         self.authViewModel = authViewModel
         self.newName = authViewModel.name
+        self.originalName = authViewModel.name
         self.imageUrl = authViewModel.profileIconURL ?? ""
+    }
+
+    var hasChanges: Bool {
+        return newName != originalName || selectedUIImage != nil
     }
 
     func selectPhoto(newValue: PhotosPickerItem?) {
@@ -69,12 +75,11 @@ class EditProfileViewModel: ObservableObject {
     func logout() {
         authViewModel.logout()
     }
-    
+
     func deleteAccount(password: String) {
         authViewModel.deleteAccount(password: password)
     }
-    
-    
+
     func fetchProfile() {
         Task {
             isLoading = true

@@ -149,11 +149,12 @@ struct EditProfileView: View {
                         .foregroundColor(.customWhite)
                         .frame(maxWidth: .infinity)
                         .padding()
-                        .background(Color.customLightPink)
+                        .background(viewModel.hasChanges ? Color.customPink : Color.gray)
                         .cornerRadius(15)
+                        .animation(.easeInOut(duration: 0.3), value: viewModel.hasChanges)
                 }
                 .padding(.horizontal, 50)
-                .disabled(viewModel.newName.isEmpty && viewModel.selectedUIImage == nil || viewModel.isLoading)
+                .disabled(!viewModel.hasChanges || viewModel.isLoading)
             } else {
                 Button(action: {
                     viewModel.logout()
