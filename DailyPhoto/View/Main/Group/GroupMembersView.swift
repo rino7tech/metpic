@@ -13,7 +13,7 @@ struct GroupMembersView: View {
     @StateObject private var viewModel = GroupViewModel()
     @State private var showActionSheet = false
     @State private var selectedMember: MemberModel?
-    @State private var showQRGenerator = false  // QRコード生成画面を表示するためのフラグ
+    @State private var showQRGenerator = false
     private let currentUserId = Auth.auth().currentUser?.uid
 
     var body: some View {
@@ -34,7 +34,6 @@ struct GroupMembersView: View {
                 ZStack {
                     ScrollView {
                         VStack(spacing: 15) {
-                            // メンバーのリスト
                             ForEach(viewModel.members) { member in
                                 memberCard(member: member)
                                     .onLongPressGesture {
@@ -45,7 +44,6 @@ struct GroupMembersView: View {
                                     }
                             }
 
-                            // メンバーが1人のときに「メンバーを追加」カードを表示
                             if viewModel.members.count == 1 {
                                 addMemberCard()
                                     .onTapGesture {
@@ -54,6 +52,11 @@ struct GroupMembersView: View {
                             }
                         }
                         .padding()
+                        .refreshable {
+                            Task {
+                                await viewModel.fetchFirstGroupAndMembers()
+                            }
+                        }
                     }
                 }
                 .padding(.horizontal, 10)
@@ -133,7 +136,6 @@ struct GroupMembersView: View {
         .padding(.horizontal, 15)
     }
 
-    // 「メンバーを追加」用のカード
     private func addMemberCard() -> some View {
         Button(action: {
             showQRGenerator = true

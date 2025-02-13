@@ -17,7 +17,56 @@ class QRCodeGeneratorViewModel: ObservableObject {
     @Published var groupMembers: [String] = []
 
     let groupName = "My Group"
-    
+
+    func generateGroupAndQRCode(currentUID: String?) {
+        guard let currentUID = currentUID else {
+            errorMessage = "ユーザーIDが取得できませんでした"
+            return
+        }
+
+        Task {
+            do {
+                isSaving = true
+                errorMessage = nil
+                successMessage = nil
+
+                // ユーザーがすでにグループに参加しているか確認
+                if let existingGroup = try? await FirebaseClient.fetchFirstGroupForUser(userId: currentUID) {
+                    // すでに参加しているグループがある場合は、そのグループのQRコードを生成
+                    generatedGroupId = existingGroup.id
+                    fetchGroupMembers(groupId: existingGroup.id)
+                    successMessage = "すでに参加しているグループのQRコードを生成しました"
+                } else {
+                    // 参加しているグループがない場合は新規作成
+                    let newGroupId = UUID().uuidString
+                    generatedGroupId = newGroupId
+
+                    let group = GroupModel(id: newGroupId, name: groupName, createdAt: Date(), members: [currentUID])
+                    try await FirebaseClient.createGroup(group: group)
+
+                    successMessage = "新しいグループを作成し、QRコードを生成しました"
+                    fetchGroupMembers(groupId: newGroupId)
+                }
+
+                isSaving = false
+            } catch {
+                errorMessage = "グループの作成または取得に失敗しました: \(error.localizedDescription)"
+                isSaving = false
+            }
+        }
+    }
+
+    private func fetchGroupMembers(groupId: String) {
+        Task {
+            do {
+                let group = try await FirebaseClient.fetchGroup(groupId: groupId)
+                groupMembers = group.members
+            } catch {
+                errorMessage = "参加者の取得に失敗しました: \(error.localizedDescription)"
+            }
+        }
+    }
+
     func generateQRCode(from string: String) -> UIImage? {
         let data = string.data(using: .utf8)
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }
@@ -41,44 +90,5 @@ class QRCodeGeneratorViewModel: ObservableObject {
             return UIImage(cgImage: cgImage)
         }
         return nil
-    }
-
-    func generateGroupAndQRCode(currentUID: String?) {
-        guard let currentUID = currentUID else {
-            errorMessage = "ユーザーIDが取得できませんでした"
-            return
-        }
-
-        Task {
-            do {
-                isSaving = true
-                errorMessage = nil
-                successMessage = nil
-
-                let groupId = UUID().uuidString
-                generatedGroupId = groupId
-
-                let group = GroupModel(id: groupId, name: groupName, createdAt: Date(), members: [currentUID])
-                try await FirebaseClient.createGroup(group: group)
-
-                successMessage = "グループが作成され、QRコードが生成されました: \(groupId)"
-                fetchGroupMembers(groupId: groupId)
-                isSaving = false
-            } catch {
-                errorMessage = "グループの作成に失敗しました: \(error.localizedDescription)"
-                isSaving = false
-            }
-        }
-    }
-
-    private func fetchGroupMembers(groupId: String) {
-        Task {
-            do {
-                let group = try await FirebaseClient.fetchGroup(groupId: groupId)
-                groupMembers = group.members
-            } catch {
-                errorMessage = "参加者の取得に失敗しました: \(error.localizedDescription)"
-            }
-        }
     }
 }
