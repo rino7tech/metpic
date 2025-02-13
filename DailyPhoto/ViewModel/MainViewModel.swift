@@ -37,4 +37,12 @@ class MainViewModel: ObservableObject {
             hasTakenPhotoToday = false
         }
     }
+
+    func checkAndUpdateOutdatedSections() async {
+        do {
+            try await FirebaseClient.updateOutdatedSections()
+        } catch {
+            print("❌ セクションの更新に失敗しました: \(error.localizedDescription)")
+        }
+    }
 }
