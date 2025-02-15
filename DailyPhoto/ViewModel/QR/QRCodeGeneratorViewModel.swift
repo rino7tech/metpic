@@ -30,14 +30,11 @@ class QRCodeGeneratorViewModel: ObservableObject {
                 errorMessage = nil
                 successMessage = nil
 
-                // ユーザーがすでにグループに参加しているか確認
                 if let existingGroup = try? await FirebaseClient.fetchFirstGroupForUser(userId: currentUID) {
-                    // すでに参加しているグループがある場合は、そのグループのQRコードを生成
                     generatedGroupId = existingGroup.id
                     fetchGroupMembers(groupId: existingGroup.id)
                     successMessage = "すでに参加しているグループのQRコードを生成しました"
                 } else {
-                    // 参加しているグループがない場合は新規作成
                     let newGroupId = UUID().uuidString
                     generatedGroupId = newGroupId
 
