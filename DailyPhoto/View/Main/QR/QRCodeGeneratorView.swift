@@ -13,7 +13,7 @@ struct QRCodeGeneratorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = QRCodeGeneratorViewModel()
     @Binding var navigateToCustomTab: Bool
-    var isPresentedFromGroupMembers: Bool  // 追加
+    var isPresentedFromGroupMembers: Bool
 
     var body: some View {
         ZStack {
@@ -60,9 +60,9 @@ struct QRCodeGeneratorView: View {
 
                     Button(action: {
                         if isPresentedFromGroupMembers {
-                            dismiss() // GroupMembersView から開いた場合は閉じる
+                            dismiss()
                         } else {
-                            navigateToCustomTab = true // MainQRCodeView から開いた場合は次の処理
+                            navigateToCustomTab = true
                         }
                     }) {
                         HStack {
