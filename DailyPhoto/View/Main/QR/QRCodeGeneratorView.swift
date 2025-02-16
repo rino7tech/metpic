@@ -13,7 +13,9 @@ struct QRCodeGeneratorView: View {
     @Environment(\.dismiss) private var dismiss
     @StateObject private var viewModel = QRCodeGeneratorViewModel()
     @Binding var navigateToCustomTab: Bool
-    var isPresentedFromGroupMembers: Bool  // 追加
+    var isPresentedFromGroupMembers: Bool
+    @State private var qrImage: UIImage?
+    @State private var isShareSheetPresented = false
 
     var body: some View {
         ZStack {
@@ -48,6 +50,9 @@ struct QRCodeGeneratorView: View {
                                 )
                         }
                         .padding()
+                        .onAppear {
+                            self.qrImage = qrImage
+                        }
                     } else if viewModel.isSaving {
                         ProgressView("QRコードを生成中...")
                             .padding()
@@ -58,11 +63,42 @@ struct QRCodeGeneratorView: View {
 
                     Spacer()
 
+                    if let qrImage = qrImage {
+                        Button(action: {
+                            isShareSheetPresented = true
+                        }) {
+                            HStack {
+                                Image(systemName: "square.and.arrow.up")
+                                    .foregroundStyle(Color.customPink)
+                                Text("共有")
+                                    .font(.headline)
+                                    .foregroundColor(.customPink)
+                                    .fontWeight(.bold)
+                            }
+                            .padding()
+                            .frame(maxWidth: .infinity)
+                            .background(Color.customWhite.opacity(0.8))
+                            .cornerRadius(25)
+                            .shadow(color: Color.customPink.opacity(0.5), radius: 10, x: 0, y: 5)
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 25)
+                                    .stroke(Color.customPink, lineWidth: 4)
+                            )
+                        }
+                        .padding(.horizontal, 45)
+                        .padding(.bottom, 10)
+                        .sheet(isPresented: $isShareSheetPresented) {
+                            if let pngData = qrImage.pngData() {
+                                ShareSheet(activityItems: [pngData])
+                            }
+                        }
+                    }
+
                     Button(action: {
                         if isPresentedFromGroupMembers {
-                            dismiss() // GroupMembersView から開いた場合は閉じる
+                            dismiss()
                         } else {
-                            navigateToCustomTab = true // MainQRCodeView から開いた場合は次の処理
+                            navigateToCustomTab = true
                         }
                     }) {
                         HStack {

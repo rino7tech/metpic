@@ -21,8 +21,8 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
+		2333A5382D5E0FC000A28FC6 /* DailyPhoto.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DailyPhoto.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		234A9EFD2D562133008FF200 /* GoogleService-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = "GoogleService-Info.plist"; sourceTree = "<group>"; };
-		237F90532D267A770077E851 /* DailyPhoto.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; name = DailyPhoto.app; path = "/Users/rino/Desktop/metpic/build/Debug-iphoneos/DailyPhoto.app"; sourceTree = "<absolute>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -59,6 +59,7 @@
 			children = (
 				237F90552D267A770077E851 /* DailyPhoto */,
 				234A9EFD2D562133008FF200 /* GoogleService-Info.plist */,
+				2333A5382D5E0FC000A28FC6 /* DailyPhoto.app */,
 			);
 			sourceTree = "<group>";
 		};
@@ -94,7 +95,7 @@
 				237F91742D27E5090077E851 /* Kingfisher */,
 			);
 			productName = DailyPhoto;
-			productReference = 237F90532D267A770077E851 /* DailyPhoto.app */;
+			productReference = 2333A5382D5E0FC000A28FC6 /* DailyPhoto.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -299,7 +300,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.YumikoIto.DailyPhoto;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
@@ -334,7 +335,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				MARKETING_VERSION = 1.4;
+				MARKETING_VERSION = 1.6;
 				PRODUCT_BUNDLE_IDENTIFIER = com.YumikoIto.DailyPhoto;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
