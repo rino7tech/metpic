@@ -10,6 +10,11 @@ import SwiftUI
 @main
 struct DailyPhotoApp: App {
     @UIApplicationDelegateAdaptor(AppDelegate.self) var delegate
+
+    init() {
+        NotificationManager.shared.requestNotificationPermission()
+    }
+
     var body: some Scene {
         WindowGroup {
             ContentView()
